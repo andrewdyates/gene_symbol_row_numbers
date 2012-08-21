@@ -1,28 +1,24 @@
 #!/usr/bin/python
 """
-python script.py outdir=$HOME/Desktop gpl_id=GPL570
+NOTE: This would better use the .tab GPL file definition.
+
+python script.py outdir=$HOME/Desktop fname_brief=$HOME/Desktop/GSE7307_GPL570.gpl_brief.txt fname_data=$HOME/Desktop/GSE7307_GPL570.probes.tab
 """
 from geo_api import *
 from lab_util import *
 import sys, os
 
-def main(outdir=None, gpl_fname=None, gpl_id=None):
-  assert outdir and gpl_id
-  gpl_id = gpl_id.upper()
+def main(outdir=None, fname_data=None, fname_brief=None):
+  assert outdir and fname_data and fname_brief
   if not os.path.exists(outdir):
     make_dir(outdir)
 
-  if not gpl_fname:
-    gpl_fname = os.path.join(outdir, "%s.txt" % gpl_id)
-    fp = open(gpl_fname, "w")
-    print "gpl_fname not provided. Downloading GPL file as %s." % (gpl_fname)
-    for line in GPL.fp_download(gpl_id):
-      fp.write(line)
-
-  print "Loading GPL definition from file %s..." % (gpl_fname)
-  gpl = LocalGPL(gpl_fname, gpl_id)
+  print "Loading GPL definition from files %s and %s..." % (fname_brief, fname_data)
+  data_is_tab = (fname_data.rpartition('.')[2].lower() == 'tab')
+  gpl = LocalGPL(fname_brief=fname_brief, fname_data=fname_data, data_is_tab=data_is_tab)
   gpl.load()
   print gpl
+  print gpl.attrs
   print len(gpl.row_desc)
 
 
