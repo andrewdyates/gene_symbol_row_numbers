@@ -71,7 +71,7 @@ def main(outdir=None, gpl_brief=None, gpl_data=None, study_data=None, varlist_fn
   fp.close()
 
   # Save data array copy of only selected rows.
-  out_M_fname = os.path.join(outdir, "%s.gt%.2f.tab" % (os.path.basename(gpl_data), percentile))
+  out_M_fname = os.path.join(outdir, "%s.gt%.2f.tab" % (os.path.basename(study_data), percentile))
   print "Saving %d selected rows of data matrix as .tab format as %s" % (len(idxs), out_M_fname)
   masked_npy_to_tab.npy_to_tab( \
     M[idxs, :], open(out_M_fname, 'w'), varlist=[varlist[i] for i in idxs])
