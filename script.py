@@ -44,7 +44,7 @@ def main(outdir=None, gpl_brief=None, gpl_data=None, study_data=None, varlist_fn
     assert len(varlist) == np.size(M, 0)
 
   print "Verifying row ID alignment between data and GPL row definitions..."
-  assert_row_alignment(M=M, varlist=varlist, gpl=gpl)
+  assert_row_alignment(n=np.size(M,0), varlist=varlist, gpl=gpl)
 
   # Compute mean row (probe) expression above percentile.
   print "Computing %.2f percentile mean row expression threshold." % (percentile)
