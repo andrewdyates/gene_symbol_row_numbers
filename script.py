@@ -13,8 +13,10 @@ import cPickle as pickle
 from lab_util.tab_to_npy import *
 import sys, os
 
-def main(outdir=None, gpl_brief=None, gpl_data=None, study_data=None, varlist_fname=None):
+def main(outdir=None, gpl_brief=None, gpl_data=None, study_data=None, varlist_fname=None, percentile=0.25):
   assert outdir and gpl_brief and gpl_data and study_data
+  percentile = float(percentile)
+  assert percentile >= 0
   if not os.path.exists(outdir):
     make_dir(outdir)
 
@@ -33,7 +35,7 @@ def main(outdir=None, gpl_brief=None, gpl_data=None, study_data=None, varlist_fn
   data_is_tab = (study_data.rpartition('.')[2].lower() == 'tab')
   if data_is_tab:
     print "Loading study data file %s as tab file to numpy.MaskedArray..." % (study_data)
-    M, varlist = tab_to_npy(tab_fname)
+    M, varlist = tab_to_npy(study_data)
   else:
     assert varlist_fname, "varlist_fname parameter must be set to variable list"
     print "Loading study data file %s as pickled numpy.MaskedArray..." % (study_data)
@@ -52,6 +54,38 @@ def main(outdir=None, gpl_brief=None, gpl_data=None, study_data=None, varlist_fn
     assert s in gpl.row_desc
   print "Row alignment verified."
 
+  # Compute mean expression threshold.
+  print "Computing %.2f percentile mean row expression threshold." % (percentile)
+  means = M.mean(1)
+  print "Mean expression distributions:"
+  print "min: %.4f, max: %.4f, mean: %.4f, median: %.4f" % \
+      (means.min(), means.max(), means.mean(), np.median(means))
+  threshold = np.sort(means)[int(round(np.size(means)*percentile))]
+  print "Minimum mean expression threshold above @%.2f percentile: %.4f" % (percentile, threshold)
+  
+  # Select gene symbols with greatest mean expression.
+  symbols = {} # {str=>int} of gene_symbol=>row_number
+  for i in xrange(np.size(M,0)):
+    if means[i] <= threshold:
+      continue
+    row_id = varlist[i]
+    gene_sym = gpl.get_column(row_id, 'GENE_SYMBOL')
+    if gene_sym is None:
+      continue
+    else:
+      # Add to symbol list if new symbol or previous mean is less than this mean.
+      if gene_sym not in symbols or means[symbols[gene_sym]] < means[i]:
+        symbols[gene_sym] = i
+  print "Selected %d unique gene symbols" % len(symbols)
+
+  # Output results
+  study_id = os.path.basename(gpl_data).partition('.')[0]
+  out_fname = os.path.join(outdir, "%s.symbol_rownums.gt%.2f.txt" % (study_id, percentile))
+  print "Printing sorted list as [row_num]\\t[probe ID]\\t[gene symbol]\\n to %s" % out_fname
+  fp = open(out_fname, "w")
+  for i in sorted(symbols.values()):
+    fp.write("%d\t%s\t%s\n" % (i, varlist[i], gpl.get_column(varlist[i], 'GENE_SYMBOL')))
+  fp.close()
 
 if __name__ == "__main__":
   main(**dict([s.split('=') for s in sys.argv[1:]]))
