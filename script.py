@@ -2,23 +2,26 @@
 """
 NOTE: This would better use the .tab GPL file definition.
 
-python script.py outdir=$HOME/Desktop fname_brief=$HOME/Desktop/GSE7307_GPL570.gpl_brief.txt fname_data=$HOME/Desktop/GSE7307_GPL570.probes.tab
+export STUDY_DIR=$HOME/Dropbox/biostat/study_data/GSE7307
+python script.py outdir=$HOME/Desktop gpl_brief=$STUDY_DIR/GSE7307_GPL570.gpl_brief.txt gpl_data=$STUDY_DIR/GSE7307_GPL570.probes.tab
 """
-nfrom geo_api import *
+from geo_api import *
 from lab_util import *
 import sys, os
 
-def main(outdir=None, fname_gpl_desc=None, fname_gpl_brief=None, fname_data=None):
-  assert outdir and fname_gpl_desc and fname_data and fname_brief
+def main(outdir=None, gpl_brief=None, gpl_data=None, data=None):
+  assert outdir and gpl_brief and gpl_data
   if not os.path.exists(outdir):
     make_dir(outdir)
 
-  # Load GPLs
-  print "Loading GPL definition from files %s and %s..." % (fname_brief, fname_gpl_desc)
-  data_is_tab = (fname_data.rpartition('.')[2].lower() == 'tab')
+  # Load GPL
+  print "Loading GPL definition from files %s and %s..." % (gpl_brief, gpl_data)
+  data_is_tab = (gpl_data.rpartition('.')[2].lower() == 'tab')
   if data_is_tab:
     print "Loading GPL data as tab file..."
-  gpl = LocalGPL(fname_brief=fname_brief, fname_data=fname_gpl_desc, data_is_tab=data_is_tab)
+  else:
+    print "Loading GPL data as SOFT text file..."
+  gpl = LocalGPL(fname_brief=gpl_brief, fname_data=gpl_data, data_is_tab=data_is_tab)
   gpl.load()
   print "Loaded %d row descriptions." % len(gpl.row_desc)
 
