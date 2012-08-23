@@ -22,9 +22,6 @@ def main(outdir=None, fname_gpl_desc=None, fname_gpl_brief=None, fname_data=None
   gpl.load()
   print "Loaded %d row descriptions." % len(gpl.row_desc)
 
-  # Load data file
-  tab_to_npy
-
 
 
 if __name__ == "__main__":
