@@ -13,6 +13,7 @@ from lab_util.tab_to_npy import *
 from lab_util import masked_npy_to_tab
 from __init__ import *
 
+
 def main(outdir=None, gpl_brief=None, gpl_data=None, study_data=None, varlist_fname=None, percentile=0.25):
   assert outdir and gpl_brief and gpl_data and study_data
   percentile = float(percentile)
@@ -20,7 +21,37 @@ def main(outdir=None, gpl_brief=None, gpl_data=None, study_data=None, varlist_fn
   if not os.path.exists(outdir):
     print "Creating output directory %s..." % (outdir)
     make_dir(outdir)
+  d = run(gpl_brief=gpl_brief, gpl_data=gpl_data, study_data=study_data, varlist_fname=varlist_fname, percentile=percentile)
+  idxs, gpl, M, varlist = d['idxs'], d['gpl'], d['M'], d['varlist']
 
+  # Output index results.
+  study_id = os.path.basename(gpl_data).partition('.')[0]
+  out_idx_fname = os.path.join(outdir, "%s.symbol_rownums.gt%.2f.txt" % (study_id, percentile))
+  print "Saving sorted idx list in line format '[row_num]\\t[probe ID]\\t[gene symbol]\\n' to %s" \
+      % (out_idx_fname)
+  fp = open(out_idx_fname, "w")
+  for i in idxs:
+    fp.write("%d\t%s\t%s\n" % (i, varlist[i], gpl.get_column(varlist[i], 'GENE_SYMBOL')))
+  fp.close()
+
+  # Save data array copy of only selected rows.
+  out_M_fname = os.path.join(outdir, "%s.gt%.2f.tab" % (os.path.basename(study_data), percentile))
+  print "Saving %d selected rows of data matrix as .tab format as %s" % (len(idxs), out_M_fname)
+  masked_npy_to_tab.npy_to_tab( \
+    M[idxs, :], open(out_M_fname, 'w'), varlist=[varlist[i] for i in idxs])
+
+
+def run(gpl_brief=None, gpl_data=None, study_data=None, varlist_fname=None, percentile=0.25):
+  """Main workflow with status messages.
+
+  Returns:
+  {
+    'gpl': gpl,
+    'M': M,
+    'varlist': varlist,
+    'idxs': idxs,
+  }  
+  """
   # Load GPL.
   print "Loading GPL definition from files %s and %s..." % (gpl_brief, gpl_data)
   gpl_is_tab = fname_is_tab(gpl_data)
@@ -60,21 +91,13 @@ def main(outdir=None, gpl_brief=None, gpl_data=None, study_data=None, varlist_fn
   print "Selected %d unique gene symbols" % len(d_symbols)
   idxs = sorted(d_symbols.values())
 
-  # Output index results.
-  study_id = os.path.basename(gpl_data).partition('.')[0]
-  out_idx_fname = os.path.join(outdir, "%s.symbol_rownums.gt%.2f.txt" % (study_id, percentile))
-  print "Saving sorted idx list in line format '[row_num]\\t[probe ID]\\t[gene symbol]\\n' to %s" \
-      % (out_idx_fname)
-  fp = open(out_idx_fname, "w")
-  for i in idxs:
-    fp.write("%d\t%s\t%s\n" % (i, varlist[i], gpl.get_column(varlist[i], 'GENE_SYMBOL')))
-  fp.close()
-
-  # Save data array copy of only selected rows.
-  out_M_fname = os.path.join(outdir, "%s.gt%.2f.tab" % (os.path.basename(study_data), percentile))
-  print "Saving %d selected rows of data matrix as .tab format as %s" % (len(idxs), out_M_fname)
-  masked_npy_to_tab.npy_to_tab( \
-    M[idxs, :], open(out_M_fname, 'w'), varlist=[varlist[i] for i in idxs])
+  out = {
+    'gpl': gpl,
+    'M': M,
+    'varlist': varlist,
+    'idxs': idxs,
+    }
+  return out
 
   
 if __name__ == "__main__":
