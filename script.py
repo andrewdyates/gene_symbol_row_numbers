@@ -46,9 +46,10 @@ def run(gpl_brief=None, gpl_data=None, study_data=None, varlist_fname=None, perc
 
   Returns:
   {
-    'gpl': gpl,
-    'M': M,
-    'varlist': varlist,
+    'gpl': gpl, loaded GPL object
+    'M': M, unfiltered matrix of data
+    'd_symbols': d_symbols, {str:int} filtered list of {gene_symbol: row number}
+    'varlist': varlist, [str] of row ordered varible names in M
     'idxs': idxs,
   }  
   """
@@ -90,9 +91,10 @@ def run(gpl_brief=None, gpl_data=None, study_data=None, varlist_fname=None, perc
   d_symbols = gene_sym_idxs(gpl=gpl, means=means, threshold=threshold)
   print "Selected %d unique gene symbols" % len(d_symbols)
   idxs = sorted(d_symbols.values())
-
+  
   out = {
     'gpl': gpl,
+    'd_symbols': d_symbols,
     'M': M,
     'varlist': varlist,
     'idxs': idxs,
